@@ -1,0 +1,72 @@
+from bs4 import BeautifulSoup
+from urllib.request import urlopen, Request
+import matplotlib.pyplot as plt
+import time
+import datetime
+import csv
+import smtplib
+import pandas as pd
+
+
+def yahoo_scrape(url):
+    ''' given a url, open the page and print
+        various HTML info, just for funsies,
+        don't return anything
+    '''
+    url = 'https://finance.yahoo.com/quote/NVDA'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    req = Request(url, headers=headers)
+    html = urlopen(req)
+    bs = BeautifulSoup(html.read(), "html.parser")
+    #Name of Stock
+    name_element = bs.find("h1", {"class": "yf-xxbei9"})
+    name = name_element.get_text()
+    #Price of Stock
+    price_element = bs.find("span", {"class": "price yf-15b2o7n"})
+    price = price_element.get_text()
+    #Percentage Change
+    percent_element = bs.find("span", {"class":"positive yf-15b2o7n"})
+    perc_change = percent_element.get_text()
+
+    #Date of data acquired
+    c_date = datetime.date.today()
+    print(name)
+    print(price)
+    print(c_date)
+    print(perc_change)
+    list = [name, price, perc_change, c_date]
+    print(list)
+    with open('NVDIA_WebScraperData.csv', 'a+', newline='', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(list)
+    return(list)
+
+
+
+def main():
+
+    url = 'https://finance.yahoo.com/quote/NVDA/'
+    header = ['Title', 'Price', '% Change', 'Date']
+
+    # Open the file in 'a' mode and write the header only if file empty
+    try:
+        with open('NVDIA_WebScraperData.csv', 'r', newline='', encoding='UTF8') as f:
+            first_line = f.readline()
+            if first_line == '':  # if the file is empty, write the header
+                with open('NVDIA_WebScraperData.csv', 'a+', newline='', encoding='UTF8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(header)
+    except FileNotFoundError:
+        # If the file doesn't exist, create it and write the header
+        with open('NVDIA_WebScraperData.csv', 'w', newline='', encoding='UTF8') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+
+    while True:
+        yahoo_scrape(url)
+        time.sleep(86400)  # Sleep for 1 day (86400 seconds)
+
+
+main()
